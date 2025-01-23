@@ -1,4 +1,4 @@
 pandas
 seaborn
 streamlit
-selenium
+bs4

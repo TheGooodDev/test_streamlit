@@ -1,7 +1,6 @@
 import streamlit as st
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+import requests
+from bs4 import BeautifulSoup
 import time
 
 st.set_page_config(page_title="News Scraper Bot", layout="centered")
@@ -20,38 +19,48 @@ for message in st.session_state.messages:
 prompt = st.chat_input("Tapez un mot-clé ou une requête pour rechercher des articles...")
 
 def scrape_news(query: str):
-    # Options pour Chrome en mode "headless" (sans interface graphique)
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-
-    driver = webdriver.Chrome(options=options)
-
-    # On effectue la recherche directement via l’URL (ex: blogdumoderateur)
-    driver.get(f"https://www.blogdumoderateur.com/?s={query}")
-
-    # Attendre un peu le chargement
-    time.sleep(2)
-
-    # Récupérer les balises <article>
-    articles_html = driver.find_elements(By.CSS_SELECTOR, 'article')
+    """
+    Cherche des articles sur blogdumoderateur.com à l'aide de BeautifulSoup.
+    Renvoie une liste de dictionnaires : {"title", "link", "img"}.
+    """
+    url = f"https://www.blogdumoderateur.com/?s={query}"
+    # Effectue la requête HTTP
+    response = requests.get(url)
+    
+    # Petite pause pour éviter de spammer
+    time.sleep(1)
+    
+    # On parse le HTML
+    soup = BeautifulSoup(response.text, "html.parser")
+    
+    # Sélection de tous les <article>
+    articles_html = soup.select("article")
     
     results = []
     for article in articles_html:
         try:
-            # Titre dans div.entry-excerpt
-            title = article.find_element(By.CSS_SELECTOR, 'div.entry-excerpt').text
-            # Lien dans le premier <a> trouvé
-            link = article.find_element(By.CSS_SELECTOR, 'a').get_attribute("href")
-            # Image dans la balise <img>
-            img = article.find_element(By.CSS_SELECTOR, 'img').get_attribute("src")
-
+            # Récupère le titre (situé dans div.entry-excerpt, par exemple)
+            title_div = article.select_one("div.entry-excerpt")
+            if not title_div:
+                continue
+            title = title_div.get_text(strip=True)
+            
+            # Récupère le lien (via le premier <a>)
+            link_a = article.select_one("a")
+            if not link_a:
+                continue
+            link = link_a.get("href")
+            
+            # Récupère l'image (balise <img>)
+            img_tag = article.select_one("img")
+            img = img_tag.get("src") if img_tag else None
+            
+            # On ajoute seulement si titre/lien valides
             results.append({"title": title, "link": link, "img": img})
-        except:
+        except Exception:
+            # En cas d'erreur, on ignore l'article
             pass
 
-    driver.quit()
     return results
 
 if prompt:
@@ -75,7 +84,6 @@ if prompt:
                 f"**[{art['title']}]({art['link']})**\n\n"
                 f"---\n\n"
             )
-
 
     # Affichage de la réponse dans la conversation
     with st.chat_message("assistant"):
