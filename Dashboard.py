@@ -18,6 +18,11 @@ def load_data():
     return pd.read_csv('https://raw.githubusercontent.com/Quera-fr/Python-Programming/refs/heads/main/data.csv')
 
 df = load_data()
+
+try :
+    st.sidebar.write(st.secrets['API_KEY'])
+except:
+    st.sidebar.write('No API Key')
 # Champ de texte
 name = st.text_input('Entrez votre texte')
 
