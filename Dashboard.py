@@ -13,8 +13,11 @@ st.subheader('This is a subheader')
 #Text
 st.write('Présentation de données avec Streamlit')
 
-df = pd.read_csv('https://raw.githubusercontent.com/Quera-fr/Python-Programming/refs/heads/main/data.csv')
+@st.cache_data
+def load_data():
+    return pd.read_csv('https://raw.githubusercontent.com/Quera-fr/Python-Programming/refs/heads/main/data.csv')
 
+df = load_data()
 # Champ de texte
 name = st.text_input('Entrez votre texte')
 
@@ -47,3 +50,6 @@ with st.form(key='my_form'):
         if st.form_submit_button(label='Valider'):
             plot = sns.histplot(data_age, kde=True)
             st.pyplot(plot.figure)
+
+
+# camera
