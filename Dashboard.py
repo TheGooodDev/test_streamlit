@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import seaborn as sns
+import os
 
 st.set_page_config(page_title='Dashboard', page_icon=':bar_chart:', layout='wide', initial_sidebar_state='auto')
 
@@ -21,6 +22,11 @@ df = load_data()
 
 try :
     st.sidebar.write(st.secrets['API_KEY'])
+except:
+    st.sidebar.write('No API Key')
+
+try:
+    st.sidebar.write(os.environ['API_KEY'])
 except:
     st.sidebar.write('No API Key')
 # Champ de texte
